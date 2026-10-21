@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi Portal - Fast Net</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to Fast Net</h1>
+            <p>Select a bundle to get online</p>
+        </div>
+
+        <div id="plans-container" class="plans">
+            <!-- Plans will be injected here by app.js -->
+            <p style="text-align:center; color:#6b7280;">Loading plans...</p>
+        </div>
+
+        <div id="checkout-section" class="checkout-section hidden">
+            <h3 id="selected-plan-name"></h3>
+            <p class="price" id="selected-plan-price"></p>
+            
+            <input type="tel" id="phone" placeholder="Enter M-Pesa Number (e.g. 2547...)" />
+            <button id="pay-btn" onclick="initiatePayment()">Pay with M-Pesa</button>
+            <p id="status-message" class="status"></p>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
