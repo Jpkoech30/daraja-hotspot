@@ -1,21 +1,17 @@
-// src/modules/admin/admin.routes.js
 const express = require('express');
 const adminController = require('./admin.controller');
-const { requireAuth } = require('../../middlewares/auth.middleware'); // Import middleware
+const { requireAuth } = require('../../middlewares/auth.middleware'); 
 
 const router = express.Router();
 
-// Apply the auth middleware to ALL routes in this file
-router.use(requireAuth);
-
 // Dashboard Stats
-router.get('/stats', adminController.getStats);
+router.get('/stats', requireAuth, adminController.getStats);
 
 // Plan Management
-router.get('/plans', adminController.getPlans);
-router.post('/plans', adminController.createPlan);
+router.get('/plans', requireAuth, adminController.getPlans);
+router.post('/plans', requireAuth, adminController.createPlan);
 
 // M-Pesa Settings
-router.post('/settings/mpesa', adminController.saveMpesaSettings);
+router.post('/settings/mpesa', requireAuth, adminController.saveMpesaSettings);
 
 module.exports = router;

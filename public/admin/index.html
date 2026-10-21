@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daraja Hotspot - Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="container">
+        <div class="card">
+            <h1>ISP Login</h1>
+            <p>Manage your Wi-Fi network</p>
+            <input type="email" id="email" placeholder="Email Address" value="admin@eldoretfastnet.co.ke">
+            <input type="password" id="password" placeholder="Password" value="password123">
+            <button onclick="login()">Login</button>
+            <p id="login-error" class="error hidden"></p>
+        </div>
+    </div>
+
+    <!-- DASHBOARD SCREEN -->
+    <div id="dashboard-screen" class="hidden">
+        <nav class="navbar">
+            <h2>Daraja Hotspot</h2>
+            <button onclick="logout()" class="logout-btn">Logout</button>
+        </nav>
+
+        <div class="dashboard-container">
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Revenue</h3>
+                    <p id="stat-revenue">KES 0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Transactions</h3>
+                    <p id="stat-tx">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Routers Online</h3>
+                    <p id="stat-routers">0</p>
+                </div>
+            </div>
+
+            <!-- M-Pesa Settings -->
+            <div class="card">
+                <h2>M-Pesa Settings</h2>
+                <p>Enter your Safaricom Daraja API credentials. These are encrypted before being saved.</p>
+                <input type="text" id="mpesa-shortcode" placeholder="Shortcode (e.g., 174379)">
+                <input type="text" id="mpesa-key" placeholder="Consumer Key">
+                <input type="text" id="mpesa-secret" placeholder="Consumer Secret">
+                <button onclick="saveMpesaSettings()">Save Settings</button>
+                <p id="mpesa-status" class="status hidden"></p>
+            </div>
+
+            <!-- Plans Management -->
+            <div class="card">
+                <h2>Manage Bundles</h2>
+                <div id="plans-list">
+                    <!-- Plans injected here -->
+                </div>
+                <hr>
+                <h3>Add New Bundle</h3>
+                <input type="text" id="plan-name" placeholder="Plan Name (e.g., 1 Hour)">
+                <input type="number" id="plan-price" placeholder="Price (KES)">
+                <input type="number" id="plan-duration" placeholder="Duration (Minutes)">
+                <input type="text" id="plan-profile" placeholder="MikroTik Profile (e.g., 1hour)">
+                <button onclick="createPlan()">Create Bundle</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

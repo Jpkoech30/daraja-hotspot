@@ -9,6 +9,7 @@ const agentsRoutes = require('./modules/agents/agents.routes');
 const webhooksRoutes = require('./modules/webhooks/webhooks.routes');
 const authRoutes = require('./modules/auth/auth.routes');
 const adminRoutes = require('./modules/admin/admin.routes');
+
 const app = express();
 
 app.use(cors());
@@ -16,12 +17,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Mount Routes
+// --- MOUNT ROUTES ---
+
+// 1. Public Auth Routes (MUST be before /api/admin)
+app.use('/api/admin/auth', authRoutes); 
+
+// 2. Protected Admin Routes
+app.use('/api/admin', adminRoutes); 
+
+// 3. Portal & Agent Routes
 app.use('/api/portal/plans', plansRoutes);
 app.use('/api/portal/checkout', checkoutRoutes);
 app.use('/api/agents', agentsRoutes);
 app.use('/api/webhooks', webhooksRoutes);
-app.use('/api/admin', adminRoutes);
+
 // Health Check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'daraja-hotspot backend is running' });
