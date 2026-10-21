@@ -1,165 +1,172 @@
-🇰🇪 Daraja Hotspot ⚡
-A Node.js provisioning backend built to empower Kenyan mini-ISPs.
-It bridges Safaricom M-Pesa (Daraja API) payments with MikroTik RouterOS to automate Wi-Fi sales, manage captive portals, and provision internet bundles.
+<div align="center">
 
-📖 Table of Contents
-The Problem
+# 🇰🇪 Daraja Hotspot
 
-The Solution: Agent Polling Architecture
+### M-Pesa-powered Wi-Fi access for Kenyan mini-ISPs
 
-Tech Stack
+Connect customer payments to MikroTik hotspot provisioning with a Node.js and PostgreSQL backend.
 
-Core Features
+![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-4169E1?logo=postgresql&logoColor=white)
+![M-Pesa](https://img.shields.io/badge/Payments-M--Pesa-brightgreen)
 
-Database Schema
+</div>
 
-Security & Idempotency
+---
 
-Local Development Setup
+## Contents
 
-Roadmap
+- [Overview](#overview)
+- [How it works](#how-it-works)
+- [Features](#features)
+- [Technology](#technology)
+- [Getting started](#getting-started)
+- [Configuration](#configuration)
+- [API routes](#api-routes)
+- [Project structure](#project-structure)
+- [Development status](#development-status)
 
-🚨 The Problem
-Local mini-ISPs in Kenya face three major hurdles:
+## Overview
 
-CGNAT (Carrier-Grade NAT): Routers using Starlink or Airtel 5G sit behind a NAT, meaning cloud backends cannot reach them directly via API to provision users.
+**Daraja Hotspot** is a captive-portal and provisioning backend for mini-ISPs. Customers choose a Wi-Fi bundle and request an M-Pesa STK Push. After a successful payment callback, the backend queues a provisioning job for the MikroTik router agent.
 
-Payment Complexity: Handling M-Pesa STK Push webhooks reliably without double-charging or double-provisioning is difficult.
+The router initiates outbound requests to the backend, so the design does not require the backend to connect directly to a router behind carrier-grade NAT.
 
-Manual Vouchers: Traditional voucher sales lead to revenue loss and lack of analytics.
+## How it works
 
-💡 The Solution: Agent Polling Architecture
-Daraja Hotspot bypasses CGNAT by using a reverse-polling model. The router talks to the cloud, rather than the cloud talking to the router.
+```text
+Customer                 Backend                    Safaricom             MikroTik
+   |                        |                           |                     |
+   |-- Choose a plan ------>|                           |                     |
+   |-- Request STK Push ---->|-- Start payment -------->|                     |
+   |<-- Enter M-Pesa PIN ----|<-- Payment prompt -------|                     |
+   |                        |<-- Payment callback ------|                     |
+   |                        |-- Queue provisioning job ---------------------> |
+   |                        |<------------------------- Agent polls ----------|
+   |<--------------------------- Internet access ----------------------------|
+```
 
-text
-[ Customer's Phone ]
-        │ 1. Connects to Wi-Fi
-        ▼
-[ MikroTik Router ] ────── 2. Redirects to Portal ──────▶ [ Express Backend ]
-        ▲                                                         │
-        │                                                         │ 3. Triggers STK Push
-        │ 6. Agent polls every 30s,                               ▼
-        │    picks up job, and                               [ Safaricom API ]
-        │    executes locally.                                      │
-        │                                                           │ 4. User enters PIN
-        │                                                           ▼
-        └────────────── 5. Webhook confirms payment ◀──────── [ Callback ]
-A local MikroTik agent polls the backend every 30 seconds via HTTPS.
+The generated RouterOS setup script schedules an agent poll every 30 seconds. The agent requests queued jobs, and the backend processes payment callbacks idempotently by locking the matching transaction while it is handled.
 
-A customer connects to the Wi-Fi and is redirected to the captive portal.
+## Features
 
-The customer selects a plan and initiates an M-Pesa STK Push.
+- Customer portal for listing plans and initiating checkout
+- M-Pesa STK Push integration through Safaricom's Daraja **sandbox**
+- Admin login and dashboard for plans, router setup, payment settings, and basic stats
+- RouterOS script generation and an outbound polling endpoint for router agents
+- PostgreSQL-backed tenants, routers, plans, transactions, and provisioning jobs
+- AES-256-GCM encryption for stored M-Pesa consumer credentials
+- JWT-based admin authentication and password hashing with bcrypt
 
-Safaricom sends a webhook to the backend confirming the payment.
+## Technology
 
-The backend queues a CREATE_USER provisioning job.
+| Component | Technology |
+| --- | --- |
+| Runtime and web framework | Node.js 18+, Express 5 |
+| Database | PostgreSQL 14+, `pg` |
+| Payments | Safaricom Daraja API (sandbox endpoints) |
+| Admin authentication | JWT, bcryptjs |
+| Credential encryption | Node.js `crypto` (AES-256-GCM) |
+| Frontend | Static HTML, CSS, and JavaScript |
 
-The MikroTik agent picks up the job on its next poll and grants internet access.
+## Getting started
 
-🛠️ Tech Stack
-We deliberately chose a lightweight, high-performance stack to ensure the backend can handle thousands of concurrent polling agents and webhooks without crashing.
+### Prerequisites
 
-🟢 Core Runtime & Framework
-Node.js (v18+): Chosen for its non-blocking, event-driven I/O model. Perfect for handling thousands of simultaneous agent polling requests and asynchronous M-Pesa webhooks.
+- Node.js 18 or later
+- PostgreSQL 14 or later
+- Safaricom Daraja sandbox credentials for payment testing
 
-Express.js: A minimal and flexible Node.js web application framework used to structure our REST APIs, handle routing, and manage middleware (JWT, CORS, JSON parsing).
+### 1. Install dependencies
 
-🗄️ Database & Data Layer
-PostgreSQL (v14+): A powerful, open-source object-relational database. We rely heavily on its advanced features to guarantee financial security and job queue reliability.
-
-pg (node-postgres): The non-blocking PostgreSQL client for Node.js.
-
-Zero ORM: We write Raw SQL. This gives us 100% control over query performance, enables the use of partial indexes, and allows us to use FOR UPDATE SKIP LOCKED for a race-condition-free job queue.
-
-💳 Payments & Integrations
-Safaricom Daraja API: The official gateway for M-Pesa. We integrate directly via HTTP requests to initiate STK Pushes and listen for payment confirmation callbacks.
-
-MikroTik RouterOS v7: The target hardware. Our backend generates custom RouterOS scripts that bypass the need to expose API ports to the public internet.
-
-🛡️ Security & Utilities
-jsonwebtoken & bcryptjs: Used for secure Admin Dashboard authentication and password hashing.
-
-dotenv & Node.js crypto: Used to manage environment variables and implement AES-256-GCM encryption for securing tenants' M-Pesa API keys at rest.
-
-✨ Core Features
-Automated Router Onboarding: Mini-ISPs log into their dashboard and click "Generate Script." The backend provides a custom RouterOS script containing unique API tokens for them to paste into their router.
-
-Real Daraja API Integration: Replaces manual vouchers with real STK Push prompts sent directly to the customer's phone.
-
-Secure Multi-Tenancy: Every database query is strictly scoped by tenant_id. Tenant M-Pesa keys are encrypted with AES-256-GCM before storage.
-
-Admin Dashboard: A clean web interface for ISPs to view revenue stats, manage Wi-Fi bundles, and update their Daraja API credentials.
-
-Captive Portal: A responsive, browser-based payment page that automatically polls the backend and grants access the moment payment is confirmed.
-
-🗄️ Database Schema
-The database uses strict ENUM types and cascading foreign keys to ensure data integrity.
-
-Table Name	Description	Key Fields
-tenants	Mini-ISPs	id, email, password_hash, encrypted M-Pesa credentials
-routers	MikroTik devices	tenant_id, local_ip, health, agent_token_hash
-hotspot_plans	Products sold	name, price, duration_min, mikrotik_profile
-transactions	M-Pesa records	checkout_id, receipt, phone, mac_address, status
-jobs	Command queue	router_id, action, JSONB payload, status
-🔒 Security & Idempotency
-Financial-grade engineering rules applied to this system:
-
-Webhook Idempotency: Uses SELECT ... FOR UPDATE on the transaction row. If Safaricom sends the same webhook twice, the backend ignores the duplicate.
-
-Agent Authentication: Routers use a unique token generated by the dashboard. The backend stores only the SHA-256 hash of the token.
-
-Tenant Isolation: Every repository function strictly requires a tenant_id in the WHERE clause.
-
-Job Queue Integrity: Uses PostgreSQL FOR UPDATE SKIP LOCKED to guarantee race-condition-free job processing, ensuring a job is never given to two routers at once.
-
-Encryption: M-Pesa Daraja Keys are encrypted at rest using AES-256-GCM.
-
-🚀 Local Development Setup
-Prerequisites
-Node.js (v18+)
-
-PostgreSQL (v14+)
-
-1. Installation
-Clone the repository and install dependencies:
-
-bash
-git clone <your-repo-url>
+```bash
+git clone <your-repository-url>
 cd daraja-hotspot
 npm install
-2. Environment Variables
-Create a .env file in the root directory:
+```
 
-env
+### 2. Configure environment
+
+Create a `.env` file in the project root using the variables in [Configuration](#configuration).
+
+### 3. Create the development database
+
+Create a PostgreSQL database (for example, `miniisp`), then run:
+
+```bash
+node setup.js
+```
+
+> **Warning:** The setup script drops and recreates the application's tables and inserts sample data. It is destructive—use it only with a disposable development database.
+
+The seeded development login is `admin@eldoretfastnet.co.ke` / `password123`. Do not use these credentials in a deployed environment.
+
+### 4. Start the server
+
+```bash
+npm run dev
+```
+
+The app listens on `http://localhost:3000` by default.
+
+| Page | URL |
+| --- | --- |
+| Customer portal | <http://localhost:3000/> |
+| Admin dashboard | <http://localhost:3000/admin/> |
+| Health check | <http://localhost:3000/health> |
+
+## Configuration
+
+```env
 PORT=3000
 NODE_ENV=development
-DATABASE_URL=postgresql://postgres@localhost:5432/miniisp
-JWT_SECRET=your_super_secret_jwt_key
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/miniisp
+JWT_SECRET=replace_with_a_long_random_secret
 JWT_EXPIRES_IN=7d
-ENCRYPTION_KEY=your_64_character_hex_string
-BACKEND_URL=https://your-ngrok-url.ngrok-free.app
-3. Database Setup
-Run the setup script to build tables and insert test data:
+ENCRYPTION_KEY=replace_with_64_hex_characters
+BACKEND_URL=https://your-public-https-url
+MPESA_CALLBACK_URL=https://your-public-https-url/api/webhooks/mpesa
+```
 
-bash
-node setup.js
-(Default Admin Login: admin@eldoretfastnet.co.ke / password123)
+`ENCRYPTION_KEY` must be exactly 64 hexadecimal characters (32 bytes). Use a cryptographically random value and keep it private. `BACKEND_URL` is used in the generated router setup script; the Daraja callback URL must be reachable by Safaricom. For local callback testing, expose your development server through a secure HTTPS tunnel and set both URLs accordingly.
 
-4. Start the Server
-bash
-npm run dev
-The server will start at http://localhost:3000.
+## API routes
 
-Customer Portal: http://localhost:3000
+| Method | Route | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/admin/auth/login` | Admin login |
+| `GET` | `/api/admin/stats` | Dashboard statistics (authenticated) |
+| `GET` | `/api/admin/plans` | List plans (authenticated) |
+| `POST` | `/api/admin/plans` | Create a plan (authenticated) |
+| `POST` | `/api/admin/settings/mpesa` | Save M-Pesa credentials (authenticated) |
+| `POST` | `/api/admin/routers` | Create a router and generate its setup script (authenticated) |
+| `GET` | `/api/portal/plans/:tenantId` | List active plans for a tenant |
+| `POST` | `/api/portal/checkout` | Initiate an STK Push |
+| `POST` | `/api/agents/poll` | Router agent heartbeat and job polling |
+| `POST` | `/api/webhooks/mpesa` | Receive Daraja payment callbacks |
+| `GET` | `/health` | Check that the server is running |
 
-Admin Dashboard: http://localhost:3000/admin
+Protected admin routes require the JWT returned by the login endpoint.
 
-🗺️ Roadmap
-☑ Phase 1: Project structure, Database schema, and Express setup.
-☑ Phase 2: Tenant Management & Plan Fetching API.
-☑ Phase 3: Safaricom Daraja API Integration (STK Push & Webhooks).
-☑ Phase 4: MikroTik Agent Polling Endpoint & Auto-Script Generator.
-☑ Phase 5: Captive Portal Frontend (HTML/JS).
-☑ Phase 6: Admin Dashboard for Mini-ISPs (HTML/JS).
-□ Phase 7: Airtel Money Integration.
-□ Phase 8: Automated SMS Receipts and Expiry Reminders.
+## Project structure
+
+```text
+daraja-hotspot/
+├── public/                 # Customer portal and admin dashboard
+├── src/
+│   ├── config/             # Database connection
+│   ├── middlewares/        # Authentication middleware
+│   ├── modules/            # Auth, admin, agents, checkout, plans, webhooks
+│   ├── services/           # Daraja integration
+│   ├── utils/              # Encryption helpers
+│   └── app.js              # Express app and route registration
+├── setup.js                # Destructive development database seeding
+└── server.js               # Server entry point
+```
+
+## Development status
+
+This project is under active development and is intended for local and sandbox testing. The Daraja integration currently targets Safaricom's sandbox, and the seeded account and sample records are for development only. Review and harden authentication, router-agent security, payment configuration, and deployment settings before handling real users or payments.
+
+The package currently has no automated test suite configured.
