@@ -19,3 +19,13 @@ exports.createTransaction = async (tenantId, routerId, planId, checkoutId, phone
   const { rows } = await pool.query(query, values);
   return rows[0];
 };
+
+exports.getTenantMpesaSettings = async (tenantId) => {
+  const query = `
+    SELECT mpesa_shortcode, mpesa_key_enc, mpesa_secret_enc 
+    FROM tenants 
+    WHERE id = $1
+  `;
+  const { rows } = await pool.query(query, [tenantId]);
+  return rows[0];
+};
