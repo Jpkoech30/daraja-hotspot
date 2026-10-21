@@ -4,7 +4,7 @@ const { pool } = require('./src/config/db');
 
 const setupDatabase = async () => {
   try {
-    console.log('⏳ Dropping old tables (if any) and creating new schema...');
+    console.log('⏳ Dropping old tables and creating new schema...');
     
     await pool.query(`
       DROP TABLE IF EXISTS provisioning_jobs CASCADE;
@@ -29,6 +29,8 @@ const setupDatabase = async () => {
       CREATE TABLE tenants (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
         status tenant_status NOT NULL DEFAULT 'ACTIVE',
         mpesa_shortcode TEXT,
         mpesa_key_enc BYTEA,
@@ -94,9 +96,10 @@ const setupDatabase = async () => {
     `);
     console.log('✅ Tables created successfully.');
 
-    console.log('⏳ Inserting test data...');
+    console.log('⏳ Inserting test data (Email: admin@eldoretfastnet.co.ke, Password: password123)...');
     await pool.query(`
-      INSERT INTO tenants (id, name) VALUES ('11111111-1111-1111-1111-111111111111', 'Eldoret Fast Net');
+      INSERT INTO tenants (id, name, email, password_hash) VALUES 
+      ('11111111-1111-1111-1111-111111111111', 'Eldoret Fast Net', 'admin@eldoretfastnet.co.ke', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy');
       
       INSERT INTO routers (id, tenant_id, name, local_ip, agent_token_hash) 
       VALUES ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'Router 1', '192.168.88.1', 'dummyhash');

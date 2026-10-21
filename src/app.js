@@ -7,15 +7,13 @@ const plansRoutes = require('./modules/plans/plans.routes');
 const checkoutRoutes = require('./modules/checkout/checkout.routes');
 const agentsRoutes = require('./modules/agents/agents.routes');
 const webhooksRoutes = require('./modules/webhooks/webhooks.routes');
-
+const authRoutes = require('./modules/auth/auth.routes');
+const adminRoutes = require('./modules/admin/admin.routes');
 const app = express();
 
-// Global Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Serve Static Frontend Files (The Captive Portal)
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Mount Routes
@@ -23,14 +21,10 @@ app.use('/api/portal/plans', plansRoutes);
 app.use('/api/portal/checkout', checkoutRoutes);
 app.use('/api/agents', agentsRoutes);
 app.use('/api/webhooks', webhooksRoutes);
-
+app.use('/api/admin', adminRoutes);
 // Health Check
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    message: 'daraja-hotspot backend is running',
-    timestamp: new Date().toISOString()
-  });
+  res.status(200).json({ status: 'ok', message: 'daraja-hotspot backend is running' });
 });
 
 // 404 Handler
