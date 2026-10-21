@@ -1,4 +1,3 @@
-// src/modules/admin/admin.repo.js
 const { pool } = require('../../config/db');
 
 // --- M-Pesa Settings ---
@@ -41,5 +40,16 @@ exports.createPlan = async (tenantId, name, price, durationMin, profile) => {
     RETURNING *;
   `;
   const { rows } = await pool.query(query, [tenantId, name, price, durationMin, profile]);
+  return rows[0];
+};
+
+// --- Routers Management ---
+exports.createRouter = async (tenantId, name, localIp, agentTokenHash) => {
+  const query = `
+    INSERT INTO routers (tenant_id, name, local_ip, agent_token_hash)
+    VALUES ($1, $2, $3, $4)
+    RETURNING id, name, local_ip;
+  `;
+  const { rows } = await pool.query(query, [tenantId, name, localIp, agentTokenHash]);
   return rows[0];
 };

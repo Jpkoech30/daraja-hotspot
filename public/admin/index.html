@@ -44,6 +44,20 @@
                 </div>
             </div>
 
+            <!-- Router Management -->
+            <div class="card">
+                <h2>Routers</h2>
+                <p>Generate a script to connect a new MikroTik router.</p>
+                <input type="text" id="router-name" placeholder="Router Name (e.g., Estate Main Router)">
+                <button onclick="generateRouter()">Generate Setup Script</button>
+                
+                <div id="script-container" class="hidden" style="margin-top: 16px;">
+                    <p style="color: #10b981; font-weight: bold;">✅ Script Generated! Copy and paste this into your MikroTik terminal:</p>
+                    <textarea id="router-script" readonly style="width: 100%; height: 200px; font-family: monospace; font-size: 12px; padding: 8px; margin-top: 8px; background: #1f2937; color: #10b981; border: none; border-radius: 8px;"></textarea>
+                    <button onclick="copyScript()" style="margin-top: 8px; background: #3b82f6;">Copy to Clipboard</button>
+                </div>
+            </div>
+
             <!-- M-Pesa Settings -->
             <div class="card">
                 <h2>M-Pesa Settings</h2>
@@ -61,7 +75,7 @@
                 <div id="plans-list">
                     <!-- Plans injected here -->
                 </div>
-                <hr>
+                <hr style="margin: 24px 0; border: 0; border-top: 1px solid #e5e7eb;">
                 <h3>Add New Bundle</h3>
                 <input type="text" id="plan-name" placeholder="Plan Name (e.g., 1 Hour)">
                 <input type="number" id="plan-price" placeholder="Price (KES)">

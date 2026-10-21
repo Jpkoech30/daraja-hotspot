@@ -21,11 +21,11 @@ async function login() {
             token = data.token;
             showDashboard();
         } else {
-            errorEl.innerText = data.error;
+            errorEl.innerText = data.error || "Login failed";
             errorEl.classList.remove('hidden');
         }
     } catch (err) {
-        errorEl.innerText = "Login failed. Server error.";
+        errorEl.innerText = "Network error.";
         errorEl.classList.remove('hidden');
     }
 }
@@ -44,7 +44,6 @@ function showDashboard() {
     loadPlans();
 }
 
-// Helper for authenticated requests
 function getHeaders() {
     return {
         'Content-Type': 'application/json',
@@ -56,7 +55,7 @@ function getHeaders() {
 async function loadStats() {
     try {
         const res = await fetch(`${API_URL}/stats`, { headers: getHeaders() });
-        if (res.status === 401) return logout(); // Token expired
+        if (res.status === 401) return logout(); 
         
         const data = await res.json();
         if (data.success) {
@@ -154,14 +153,43 @@ async function createPlan() {
             document.getElementById('plan-price').value = '';
             document.getElementById('plan-duration').value = '';
             document.getElementById('plan-profile').value = '';
-            loadPlans(); // Refresh the list
+            loadPlans();
         } else {
             alert(`Error: ${data.error}`);
         }
     } catch (err) { console.error(err); }
 }
 
-// Check if user is already logged in on page load
+// --- Router Setup Script Generation ---
+async function generateRouter() {
+    const name = document.getElementById('router-name').value;
+    if (!name) return alert("Enter a router name");
+
+    try {
+        const res = await fetch(`${API_URL}/routers`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ name })
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('script-container').classList.remove('hidden');
+            document.getElementById('router-script').value = data.data.script;
+        } else {
+            alert(`Error: ${data.error}`);
+        }
+    } catch (err) { console.error(err); }
+}
+
+function copyScript() {
+    const textarea = document.getElementById('router-script');
+    textarea.select();
+    document.execCommand('copy');
+    alert("Script copied to clipboard!");
+}
+
+// Check login on load
 if (token) {
     showDashboard();
 }

@@ -14,4 +14,7 @@ router.post('/plans', requireAuth, adminController.createPlan);
 // M-Pesa Settings
 router.post('/settings/mpesa', requireAuth, adminController.saveMpesaSettings);
 
+// Router Management
+router.post('/routers', requireAuth, adminController.createRouter);
+
 module.exports = router;

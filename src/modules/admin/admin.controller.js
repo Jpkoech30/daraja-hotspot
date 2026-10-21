@@ -1,4 +1,3 @@
-// src/modules/admin/admin.controller.js
 const adminService = require('./admin.service');
 
 exports.saveMpesaSettings = async (req, res, next) => {
@@ -37,6 +36,18 @@ exports.createPlan = async (req, res, next) => {
     if (error.message === 'Missing required plan fields') {
       return res.status(400).json({ error: error.message });
     }
+    next(error);
+  }
+};
+
+exports.createRouter = async (req, res, next) => {
+  try {
+    const { name, localIp } = req.body;
+    if (!name) return res.status(400).json({ error: 'Router name is required' });
+    
+    const result = await adminService.generateRouterScript(req.tenantId, name, localIp || '192.168.88.1');
+    res.status(201).json({ success: true, data: result });
+  } catch (error) {
     next(error);
   }
 };
