@@ -1,64 +1,165 @@
-# 🇰🇪 Daraja Hotspot ⚡
+🇰🇪 Daraja Hotspot ⚡
+A Node.js provisioning backend built to empower Kenyan mini-ISPs.
+It bridges Safaricom M-Pesa (Daraja API) payments with MikroTik RouterOS to automate Wi-Fi sales, manage captive portals, and provision internet bundles.
 
-**Daraja Hotspot** is a production-ready, Node.js provisioning backend built to empower Kenyan mini-ISPs (Internet Service Providers). It seamlessly bridges **Safaricom M-Pesa (Daraja API)** payments with **MikroTik RouterOS** to automate Wi-Fi sales, manage captive portals, and provision internet bundles.
+📖 Table of Contents
+The Problem
 
-Designed specifically for the local hustle, it allows entrepreneurs to sell "Mbao" bundles (KES 20) and scale their neighborhood Wi-Fi networks without needing expensive billing hardware or a public IP address.
+The Solution: Agent Polling Architecture
 
----
+Tech Stack
 
-## 🚨 The Problem
+Core Features
 
-Selling Wi-Fi in Kenya is hard for small-scale ISPs. They face three major hurdles:
-1. **CGNAT (Carrier-Grade NAT):** Most local ISPs use Airtel 5G or Starlink, which puts the MikroTik router behind a massive NAT. You cannot simply SSH or API into the router from a cloud server to provision users.
-2. **Payment Integration:** Safaricom's Daraja API is powerful but complex. Building a reliable STK Push flow that doesn't double-charge or double-provision on webhook retries is difficult.
-3. **Manual Vouchers:** Many ISPs still rely on printed vouchers, which are prone to theft and offer zero analytics. 
+Database Schema
 
-## 💡 The Solution: Agent Polling Architecture
+Security & Idempotency
 
-Daraja Hotspot solves the CGNAT problem by using a **reverse-polling agent**. 
-Instead of the cloud trying to talk to the router, the router talks to the cloud.
+Local Development Setup
 
-1. **The Agent:** A lightweight script runs on the local MikroTik router and polls our backend every 30 seconds via HTTPS. 
-2. **The Payment:** A customer connects to the Wi-Fi, gets redirected to our captive portal, and triggers an M-Pesa STK Push.
-3. **The Webhook:** Safaricom confirms the payment to our backend.
-4. **The Queue:** The backend instantly queues a `CREATE_USER` job.
-5. **The Execution:** The MikroTik agent picks up the job on its next poll and grants the user internet access. Total time: **< 30 seconds**.
+Roadmap
 
----
+🚨 The Problem
+Local mini-ISPs in Kenya face three major hurdles:
 
-## ✨ Key Features
+CGNAT (Carrier-Grade NAT): Routers using Starlink or Airtel 5G sit behind a NAT, meaning cloud backends cannot reach them directly via API to provision users.
 
-*   **Multi-Tenant Architecture:** Built to handle multiple mini-ISPs from a single backend. Every query is strictly scoped by `tenant_id`.
-*   **Zero ORM, Raw SQL Performance:** Uses native `pg` for PostgreSQL. No Prisma or Sequelize. This allows for advanced PostgreSQL features like `FOR UPDATE SKIP LOCKED` for reliable job queueing and partial indexing for high-speed polling.
-*   **Idempotent Webhooks:** Built-in database locking ensures that even if Safaricom sends the same payment callback 10 times, the customer is only provisioned once.
-*   **Robust Agent Security:** Routers authenticate using unique, SHA-256 hashed agent tokens. Revoking a router is as simple as flipping a database flag.
-*   **Local Context:** Optimized for selling micro-bundles (10 KES, 20 KES) with MikroTik speed limits (Queues) to prevent network abuse.
+Payment Complexity: Handling M-Pesa STK Push webhooks reliably without double-charging or double-provisioning is difficult.
 
----
+Manual Vouchers: Traditional voucher sales lead to revenue loss and lack of analytics.
 
-## 🛠️ Tech Stack
+💡 The Solution: Agent Polling Architecture
+Daraja Hotspot bypasses CGNAT by using a reverse-polling model. The router talks to the cloud, rather than the cloud talking to the router.
 
-*   **Runtime:** Node.js
-*   **Framework:** Express.js
-*   **Database:** PostgreSQL (Raw SQL via `pg` driver)
-*   **Payments:** Safaricom Daraja API (STK Push)
-*   **Router Integration:** MikroTik RouterOS API
+text
+[ Customer's Phone ]
+        │ 1. Connects to Wi-Fi
+        ▼
+[ MikroTik Router ] ────── 2. Redirects to Portal ──────▶ [ Express Backend ]
+        ▲                                                         │
+        │                                                         │ 3. Triggers STK Push
+        │ 6. Agent polls every 30s,                               ▼
+        │    picks up job, and                               [ Safaricom API ]
+        │    executes locally.                                      │
+        │                                                           │ 4. User enters PIN
+        │                                                           ▼
+        └────────────── 5. Webhook confirms payment ◀──────── [ Callback ]
+A local MikroTik agent polls the backend every 30 seconds via HTTPS.
 
----
+A customer connects to the Wi-Fi and is redirected to the captive portal.
 
-## 📂 Project Structure
+The customer selects a plan and initiates an M-Pesa STK Push.
 
-```text
-daraja-hotspot/
-├── server.js                  # Entry point
-├── src/
-│   ├── app.js                 # Express app setup
-│   ├── config/
-│   │   └── db.js              # PostgreSQL connection pool
-│   ├── db/
-│   │   └── schema.sql         # Database schema and indexes
-│   └── modules/
-│       ├── plans/             # Captive portal plan fetching
-│       ├── checkout/          # M-Pesa STK Push initiation
-│       ├── webhooks/          # Safaricom callbacks
-│       └── agents/            # MikroTik polling endpoints
+Safaricom sends a webhook to the backend confirming the payment.
+
+The backend queues a CREATE_USER provisioning job.
+
+The MikroTik agent picks up the job on its next poll and grants internet access.
+
+🛠️ Tech Stack
+We deliberately chose a lightweight, high-performance stack to ensure the backend can handle thousands of concurrent polling agents and webhooks without crashing.
+
+🟢 Core Runtime & Framework
+Node.js (v18+): Chosen for its non-blocking, event-driven I/O model. Perfect for handling thousands of simultaneous agent polling requests and asynchronous M-Pesa webhooks.
+
+Express.js: A minimal and flexible Node.js web application framework used to structure our REST APIs, handle routing, and manage middleware (JWT, CORS, JSON parsing).
+
+🗄️ Database & Data Layer
+PostgreSQL (v14+): A powerful, open-source object-relational database. We rely heavily on its advanced features to guarantee financial security and job queue reliability.
+
+pg (node-postgres): The non-blocking PostgreSQL client for Node.js.
+
+Zero ORM: We write Raw SQL. This gives us 100% control over query performance, enables the use of partial indexes, and allows us to use FOR UPDATE SKIP LOCKED for a race-condition-free job queue.
+
+💳 Payments & Integrations
+Safaricom Daraja API: The official gateway for M-Pesa. We integrate directly via HTTP requests to initiate STK Pushes and listen for payment confirmation callbacks.
+
+MikroTik RouterOS v7: The target hardware. Our backend generates custom RouterOS scripts that bypass the need to expose API ports to the public internet.
+
+🛡️ Security & Utilities
+jsonwebtoken & bcryptjs: Used for secure Admin Dashboard authentication and password hashing.
+
+dotenv & Node.js crypto: Used to manage environment variables and implement AES-256-GCM encryption for securing tenants' M-Pesa API keys at rest.
+
+✨ Core Features
+Automated Router Onboarding: Mini-ISPs log into their dashboard and click "Generate Script." The backend provides a custom RouterOS script containing unique API tokens for them to paste into their router.
+
+Real Daraja API Integration: Replaces manual vouchers with real STK Push prompts sent directly to the customer's phone.
+
+Secure Multi-Tenancy: Every database query is strictly scoped by tenant_id. Tenant M-Pesa keys are encrypted with AES-256-GCM before storage.
+
+Admin Dashboard: A clean web interface for ISPs to view revenue stats, manage Wi-Fi bundles, and update their Daraja API credentials.
+
+Captive Portal: A responsive, browser-based payment page that automatically polls the backend and grants access the moment payment is confirmed.
+
+🗄️ Database Schema
+The database uses strict ENUM types and cascading foreign keys to ensure data integrity.
+
+Table Name	Description	Key Fields
+tenants	Mini-ISPs	id, email, password_hash, encrypted M-Pesa credentials
+routers	MikroTik devices	tenant_id, local_ip, health, agent_token_hash
+hotspot_plans	Products sold	name, price, duration_min, mikrotik_profile
+transactions	M-Pesa records	checkout_id, receipt, phone, mac_address, status
+jobs	Command queue	router_id, action, JSONB payload, status
+🔒 Security & Idempotency
+Financial-grade engineering rules applied to this system:
+
+Webhook Idempotency: Uses SELECT ... FOR UPDATE on the transaction row. If Safaricom sends the same webhook twice, the backend ignores the duplicate.
+
+Agent Authentication: Routers use a unique token generated by the dashboard. The backend stores only the SHA-256 hash of the token.
+
+Tenant Isolation: Every repository function strictly requires a tenant_id in the WHERE clause.
+
+Job Queue Integrity: Uses PostgreSQL FOR UPDATE SKIP LOCKED to guarantee race-condition-free job processing, ensuring a job is never given to two routers at once.
+
+Encryption: M-Pesa Daraja Keys are encrypted at rest using AES-256-GCM.
+
+🚀 Local Development Setup
+Prerequisites
+Node.js (v18+)
+
+PostgreSQL (v14+)
+
+1. Installation
+Clone the repository and install dependencies:
+
+bash
+git clone <your-repo-url>
+cd daraja-hotspot
+npm install
+2. Environment Variables
+Create a .env file in the root directory:
+
+env
+PORT=3000
+NODE_ENV=development
+DATABASE_URL=postgresql://postgres@localhost:5432/miniisp
+JWT_SECRET=your_super_secret_jwt_key
+JWT_EXPIRES_IN=7d
+ENCRYPTION_KEY=your_64_character_hex_string
+BACKEND_URL=https://your-ngrok-url.ngrok-free.app
+3. Database Setup
+Run the setup script to build tables and insert test data:
+
+bash
+node setup.js
+(Default Admin Login: admin@eldoretfastnet.co.ke / password123)
+
+4. Start the Server
+bash
+npm run dev
+The server will start at http://localhost:3000.
+
+Customer Portal: http://localhost:3000
+
+Admin Dashboard: http://localhost:3000/admin
+
+🗺️ Roadmap
+☑ Phase 1: Project structure, Database schema, and Express setup.
+☑ Phase 2: Tenant Management & Plan Fetching API.
+☑ Phase 3: Safaricom Daraja API Integration (STK Push & Webhooks).
+☑ Phase 4: MikroTik Agent Polling Endpoint & Auto-Script Generator.
+☑ Phase 5: Captive Portal Frontend (HTML/JS).
+☑ Phase 6: Admin Dashboard for Mini-ISPs (HTML/JS).
+□ Phase 7: Airtel Money Integration.
+□ Phase 8: Automated SMS Receipts and Expiry Reminders.
