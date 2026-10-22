@@ -1,9 +1,9 @@
-// src/modules/agents/agents.routes.js
 const express = require('express');
-const agentsController = require('./agents.controller');
+const controller = require('./agents.controller');
+const { verifyAgent } = require('../../middlewares/agentAuth');
 const router = express.Router();
 
-// POST /api/agents/poll
-router.post('/poll', agentsController.poll);
+// express.text() allows us to read the raw string body from the MikroTik
+router.post('/poll', express.text({ type: '*/*' }), verifyAgent, controller.poll);
 
 module.exports = router;
