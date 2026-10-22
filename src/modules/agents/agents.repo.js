@@ -10,16 +10,17 @@ exports.updateHeartbeat = async (routerId) => {
 };
 
 // NEW: Function to mark a previous job as done
-exports.markJobResult = async (jobId, success, errorMsg) => {
+exports.markJobResult = async (jobId, success, errorMsg, routerId) => {
   const query = `
     UPDATE provisioning_jobs 
     SET status = $1, 
         completed_at = NOW(), 
         last_error = $2 
-    WHERE id = $3
+    WHERE id = $3 AND router_id = $4 AND status = 'CLAIMED'
   `;
   const status = success ? 'SUCCESS' : 'FAILED';
-  await pool.query(query, [status, errorMsg || null, jobId]);
+  const { rowCount } = await pool.query(query, [status, errorMsg || null, jobId, routerId]);
+  return rowCount;
 };
 
 exports.claimNextJob = async (routerId) => {

@@ -11,8 +11,15 @@ exports.processPoll = async (routerId, bodyText) => {
     const errorMsg = errParts.join(':');
     
     if (jobId && (status === 'SUCCESS' || status === 'FAILED')) {
-      await agentsRepo.markJobResult(jobId, status === 'SUCCESS', errorMsg);
-      console.log(`[Agent] Job ${jobId} reported as ${status}`);
+      const updatedJobs = await agentsRepo.markJobResult(
+        jobId,
+        status === 'SUCCESS',
+        errorMsg,
+        routerId
+      );
+      if (updatedJobs) {
+        console.log(`[Agent] Job ${jobId} reported as ${status}`);
+      }
     }
   }
 

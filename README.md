@@ -47,7 +47,7 @@ Customer                 Backend                    Safaricom             MikroT
    |<--------------------------- Internet access ----------------------------|
 ```
 
-The generated RouterOS setup script schedules an agent poll every 30 seconds. The agent requests queued jobs, and the backend processes payment callbacks idempotently by locking the matching transaction while it is handled.
+The generated RouterOS setup script schedules an agent poll every 30 seconds. The agent authenticates with its `X-Agent-Token` header and exchanges plain text with the backend. Jobs are returned as `jobId:ACTION:...`; the next poll reports the previous job as `jobId:SUCCESS:` or `jobId:FAILED:error message`. The backend processes payment callbacks idempotently by locking the matching transaction while it is handled.
 
 ## Features
 
@@ -55,6 +55,8 @@ The generated RouterOS setup script schedules an agent poll every 30 seconds. Th
 - M-Pesa STK Push integration through Safaricom's Daraja **sandbox**
 - Admin login and dashboard for plans, router setup, payment settings, and basic stats
 - RouterOS script generation and an outbound polling endpoint for router agents
+- Expiry worker that queues `DISABLE_USER` jobs for expired hotspot users every minute
+- Checkout status endpoint for frontend payment polling
 - PostgreSQL-backed tenants, routers, plans, transactions, and provisioning jobs
 - AES-256-GCM encryption for stored M-Pesa consumer credentials
 - JWT-based admin authentication and password hashing with bcrypt
@@ -66,6 +68,7 @@ The generated RouterOS setup script schedules an agent poll every 30 seconds. Th
 | Runtime and web framework | Node.js 18+, Express 5 |
 | Database | PostgreSQL 14+, `pg` |
 | Payments | Safaricom Daraja API (sandbox endpoints) |
+| Background scheduling | `node-cron` |
 | Admin authentication | JWT, bcryptjs |
 | Credential encryption | Node.js `crypto` (AES-256-GCM) |
 | Frontend | Static HTML, CSS, and JavaScript |
@@ -143,11 +146,16 @@ MPESA_CALLBACK_URL=https://your-public-https-url/api/webhooks/mpesa
 | `POST` | `/api/admin/routers` | Create a router and generate its setup script (authenticated) |
 | `GET` | `/api/portal/plans/:tenantId` | List active plans for a tenant |
 | `POST` | `/api/portal/checkout` | Initiate an STK Push |
+| `GET` | `/api/portal/checkout/status/:checkoutId` | Get a transaction's payment status |
 | `POST` | `/api/agents/poll` | Router agent heartbeat and job polling |
 | `POST` | `/api/webhooks/mpesa` | Receive Daraja payment callbacks |
 | `GET` | `/health` | Check that the server is running |
 
 Protected admin routes require the JWT returned by the login endpoint.
+
+The customer portal reads `tenantId`, `routerId`, and `mac` from its URL query string. For example: `http://localhost:3000/?tenantId=<tenant-uuid>&routerId=<router-uuid>&mac=AA:BB:CC:DD:EE:FF`.
+
+The expiry worker starts with the server and runs once per minute. Expired users are removed from `hotspot_users` as their `DISABLE_USER` provisioning jobs are queued, so routers can disconnect those accounts on their next poll.
 
 ## Project structure
 
@@ -158,6 +166,7 @@ daraja-hotspot/
 │   ├── config/             # Database connection
 │   ├── middlewares/        # Authentication middleware
 │   ├── modules/            # Auth, admin, agents, checkout, plans, webhooks
+│   ├── workers/            # Scheduled expiry processing
 │   ├── services/           # Daraja integration
 │   ├── utils/              # Encryption helpers
 │   └── app.js              # Express app and route registration

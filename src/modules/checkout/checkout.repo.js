@@ -20,6 +20,14 @@ exports.createTransaction = async (tenantId, routerId, planId, checkoutId, phone
   return rows[0];
 };
 
+exports.getTransactionStatus = async (checkoutId) => {
+  const { rows } = await pool.query(
+    'SELECT status FROM transactions WHERE checkout_id = $1',
+    [checkoutId]
+  );
+  return rows[0];
+};
+
 exports.getTenantMpesaSettings = async (tenantId) => {
   const query = `
     SELECT mpesa_shortcode, mpesa_key_enc, mpesa_secret_enc 

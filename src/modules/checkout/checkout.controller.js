@@ -1,4 +1,5 @@
 const checkoutService = require('./checkout.service');
+const checkoutRepo = require('./checkout.repo');
 
 exports.checkout = async (req, res, next) => {
   try {
@@ -19,5 +20,19 @@ exports.checkout = async (req, res, next) => {
       return res.status(400).json({ success: false, error: error.message });
     }
     next(error);
+  }
+};
+
+exports.getStatus = async (req, res, next) => {
+  try {
+    const transaction = await checkoutRepo.getTransactionStatus(req.params.checkoutId);
+    if (!transaction) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+
+    const status = transaction.status === 'CANCELLED' ? 'FAILED' : transaction.status;
+    return res.status(200).json({ status });
+  } catch (error) {
+    return next(error);
   }
 };

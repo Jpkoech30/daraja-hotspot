@@ -1,6 +1,7 @@
-// IDs from your local database
-const TENANT_ID = "11111111-1111-1111-1111-111111111111";
-const ROUTER_ID = "22222222-2222-2222-2222-222222222222"; 
+const queryParams = new URLSearchParams(window.location.search);
+const TENANT_ID = queryParams.get('tenantId');
+const ROUTER_ID = queryParams.get('routerId');
+const MAC_ADDRESS = queryParams.get('mac');
 
 let selectedPlan = null;
 let statusInterval = null;
@@ -69,7 +70,7 @@ async function initiatePayment() {
                 routerId: ROUTER_ID,
                 planId: selectedPlan.id,
                 phone: phone,
-                macAddress: "AA:BB:CC:DD:EE:FF" // Mock MAC for local testing
+                macAddress: MAC_ADDRESS
             })
         });
         
