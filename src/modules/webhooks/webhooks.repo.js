@@ -3,7 +3,8 @@ const { pool } = require('../../config/db');
 
 exports.getTransactionForUpdate = async (client, checkoutId) => {
   const query = `
-    SELECT id, tenant_id, router_id, plan_id, mac_address, status
+    SELECT id, tenant_id, router_id, plan_id, mac_address, status,
+           plan_duration_min, plan_mikrotik_profile
     FROM transactions 
     WHERE checkout_id = $1 
     FOR UPDATE
@@ -19,12 +20,6 @@ exports.markFailed = async (client, transactionId, rawCallback) => {
     WHERE id = $2
   `;
   await client.query(query, [rawCallback, transactionId]);
-};
-
-exports.getPlanProfile = async (client, planId) => {
-  const query = `SELECT mikrotik_profile, duration_min FROM hotspot_plans WHERE id = $1`;
-  const { rows } = await client.query(query, [planId]);
-  return rows[0];
 };
 
 exports.markSuccessAndQueueJob = async (client, transactionId, receipt, rawCallback, tenantId, routerId, payload) => {

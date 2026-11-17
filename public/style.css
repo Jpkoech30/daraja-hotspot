@@ -39,6 +39,21 @@ body {
     font-size: 14px; 
 }
 
+.phone-label {
+    display: block;
+    margin-top: 16px;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.field-help {
+    margin: -5px 0 12px;
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
 .plans { 
     display: flex; 
     flex-direction: column; 
@@ -56,6 +71,11 @@ body {
     align-items: center; 
 }
 
+.plan-info {
+    display: grid;
+    gap: 4px;
+}
+
 .plan-card:hover, .plan-card.active { 
     border-color: #10b981; 
     background-color: #ecfdf5; 
@@ -64,6 +84,13 @@ body {
 .plan-name { 
     font-weight: 600; 
     color: #374151; 
+}
+
+.plan-duration {
+    margin: 0;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 400;
 }
 
 .plan-price { 

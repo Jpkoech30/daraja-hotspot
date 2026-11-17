@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TYPE tenant_status AS ENUM ('ACTIVE', 'SUSPENDED');
 CREATE TYPE router_health AS ENUM ('ONLINE', 'OFFLINE', 'UNHEALTHY');
 CREATE TYPE pay_status AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'CANCELLED');
-CREATE TYPE job_action AS ENUM ('CREATE_USER', 'DISABLE_USER', 'ENABLE_USER');
+CREATE TYPE job_action AS ENUM ('CREATE_USER', 'DISABLE_USER', 'ENABLE_USER', 'UNINSTALL');
 CREATE TYPE job_status AS ENUM ('PENDING', 'CLAIMED', 'SUCCESS', 'FAILED');
 
 -- ==========================================
@@ -42,7 +42,12 @@ CREATE TABLE tenants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
+  password_hash TEXT,
   status tenant_status NOT NULL DEFAULT 'ACTIVE',
+  email_verified_at TIMESTAMPTZ,
+  email_verification_code_hash TEXT,
+  email_verification_expires_at TIMESTAMPTZ,
+  email_verification_attempts INTEGER NOT NULL DEFAULT 0,
   
   -- SaaS Billing Info
   subscription_plan_id UUID REFERENCES subscription_plans(id),
@@ -61,6 +66,10 @@ CREATE TABLE tenants (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE UNIQUE INDEX idx_tenants_email_normalized ON tenants (LOWER(TRIM(email)));
+CREATE INDEX idx_tenants_email_verification_code
+  ON tenants (email_verification_code_hash)
+  WHERE email_verification_code_hash IS NOT NULL;
 CREATE TRIGGER update_tenants_modtime BEFORE UPDATE ON tenants FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
 -- PLATFORM INVOICES (Billing the ISP for using your platform)
@@ -84,11 +93,27 @@ CREATE TABLE routers (
   name TEXT NOT NULL,
   local_ip TEXT NOT NULL,
   agent_token_hash TEXT NOT NULL,   -- Hashed for security
+  active BOOLEAN NOT NULL DEFAULT TRUE,
   health router_health NOT NULL DEFAULT 'OFFLINE',
   last_seen_at TIMESTAMPTZ,
+  last_poll_at TIMESTAMPTZ,
+  setup_stage TEXT,
+  setup_updated_at TIMESTAMPTZ,
+  uninstall_requested_at TIMESTAMPTZ,
+  uninstall_completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_routers_tenant ON routers(tenant_id);
+
+-- Per-minute heartbeat buckets keep ping reporting useful without one row per poll.
+CREATE TABLE router_heartbeat_minutes (
+  router_id UUID NOT NULL REFERENCES routers(id) ON DELETE CASCADE,
+  bucket_at TIMESTAMPTZ NOT NULL,
+  ping_count INTEGER NOT NULL DEFAULT 1 CHECK (ping_count > 0),
+  PRIMARY KEY (router_id, bucket_at)
+);
+CREATE INDEX idx_router_heartbeat_minutes_bucket
+  ON router_heartbeat_minutes (bucket_at);
 
 -- BOOTSTRAP TOKENS (For the One-Line Magic Setup)
 CREATE TABLE bootstrap_tokens (
@@ -120,11 +145,13 @@ CREATE TABLE transactions (
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   router_id UUID NOT NULL REFERENCES routers(id),
   plan_id UUID NOT NULL REFERENCES hotspot_plans(id),
-  provider TEXT NOT NULL,           -- 'MPESA' or 'AIRTEL'
+  provider TEXT NOT NULL DEFAULT 'MPESA', -- 'MPESA' or 'AIRTEL'
   checkout_id TEXT UNIQUE NOT NULL,
   receipt TEXT,                     -- M-Pesa/Airtel Receipt
   phone TEXT NOT NULL,
   amount NUMERIC(10,2) NOT NULL,
+  plan_duration_min INTEGER NOT NULL,
+  plan_mikrotik_profile TEXT NOT NULL,
   mac_address TEXT,
   status pay_status NOT NULL DEFAULT 'PENDING',
   raw_callback JSONB,               -- Audit log of Safaricom/Airtel payload

@@ -5,8 +5,10 @@ const path = require('path');
 const { pool } = require('../config/db');
 
 async function runMigrations() {
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
+
     // 1. Create a table to track which migrations have run
     await client.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -20,8 +22,7 @@ async function runMigrations() {
     
     // Check if the directory exists first
     if (!fs.existsSync(migrationsDir)) {
-      console.error(`❌ Directory not found: ${migrationsDir}`);
-      process.exit(1);
+      throw new Error(`Migration directory not found: ${migrationsDir}`);
     }
 
     const files = fs.readdirSync(migrationsDir)
@@ -30,6 +31,12 @@ async function runMigrations() {
 
     // 3. Loop through files and execute unapplied ones
     for (const file of files) {
+      if ((file.includes('_development_') || file === '002_seed_data.sql')
+          && process.env.NODE_ENV !== 'development') {
+        console.log(`⏭️  Skipping development-only migration: ${file}`);
+        continue;
+      }
+
       const { rows } = await client.query('SELECT id FROM schema_migrations WHERE id = $1', [file]);
       
       if (rows.length === 0) {
@@ -55,9 +62,10 @@ async function runMigrations() {
     console.log('🎉 All migrations are up to date!');
   } catch (error) {
     console.error('Migration failed:', error);
+    process.exitCode = 1;
   } finally {
-    client.release();
-    process.exit(0);
+    if (client) client.release();
+    await pool.end();
   }
 }
 

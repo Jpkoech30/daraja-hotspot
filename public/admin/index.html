@@ -13,10 +13,20 @@
         <div class="card">
             <h1>ISP Login</h1>
             <p>Manage your Wi-Fi network</p>
-            <input type="email" id="email" placeholder="Email Address" value="admin@eldoretfastnet.co.ke">
-            <input type="password" id="password" placeholder="Password" value="password123">
-            <button onclick="login()">Login</button>
-            <p id="login-error" class="error hidden"></p>
+            <div id="register-name-field" class="hidden">
+                <input type="text" id="isp-name" placeholder="ISP / Business Name" maxlength="120" autocomplete="organization">
+            </div>
+            <input type="email" id="email" placeholder="Email Address" autocomplete="email">
+            <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+            <button id="auth-submit" onclick="login()">Login</button>
+            <p id="auth-toggle-copy">New to Daraja Hotspot?</p>
+            <button id="auth-toggle" class="logout-btn" onclick="toggleAuthMode()">Create ISP account</button>
+            <p id="login-error" class="auth-notice hidden"></p>
+            <div id="verification-code-field" class="hidden">
+                <input type="text" id="verification-code" placeholder="8-digit email code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" minlength="8" maxlength="8">
+                <button id="verify-email" onclick="verifyEmail()">Verify email</button>
+            </div>
+            <button id="resend-verification" class="logout-btn hidden" onclick="resendVerification()">Resend verification email</button>
         </div>
     </div>
 
@@ -50,6 +60,7 @@
                 <p>Generate a script to connect a new MikroTik router.</p>
                 <input type="text" id="router-name" placeholder="Router Name (e.g., Estate Main Router)">
                 <button onclick="generateRouter()">Generate Setup Script</button>
+                <div id="routers-list" style="margin-top: 16px;"></div>
                 
                 <div id="script-container" class="hidden" style="margin-top: 16px;">
                     <p style="color: #10b981; font-weight: bold;">✅ Script Generated! Copy and paste this into your MikroTik terminal:</p>
@@ -63,9 +74,11 @@
                 <h2>M-Pesa Settings</h2>
                 <p>Enter your Safaricom Daraja API credentials. These are encrypted before being saved.</p>
                 <input type="text" id="mpesa-shortcode" placeholder="Shortcode (e.g., 174379)">
-                <input type="text" id="mpesa-key" placeholder="Consumer Key">
-                <input type="text" id="mpesa-secret" placeholder="Consumer Secret">
+                <input type="password" id="mpesa-key" placeholder="Consumer Key">
+                <input type="password" id="mpesa-secret" placeholder="Consumer Secret">
+                <input type="password" id="mpesa-passkey" placeholder="Lipa na M-Pesa Passkey">
                 <button onclick="saveMpesaSettings()">Save Settings</button>
+                <button id="clear-mpesa-button" onclick="clearMpesaSettings()" style="background: #b91c1c;">Clear Settings</button>
                 <p id="mpesa-status" class="status hidden"></p>
             </div>
 

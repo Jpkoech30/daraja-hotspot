@@ -14,6 +14,9 @@ input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8p
 button { width: 100%; background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
 button:hover { background: #2563eb; }
 .error { color: #ef4444; font-size: 14px; }
+.auth-notice { font-size: 14px; }
+.auth-notice.error { color: #ef4444; }
+.auth-notice.success { color: #059669; }
 
 /* Dashboard */
 .navbar { background: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }

@@ -1,0 +1,5 @@
+ALTER TYPE job_action ADD VALUE IF NOT EXISTS 'UNINSTALL';
+
+ALTER TABLE routers
+  ADD COLUMN IF NOT EXISTS uninstall_requested_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS uninstall_completed_at TIMESTAMPTZ;

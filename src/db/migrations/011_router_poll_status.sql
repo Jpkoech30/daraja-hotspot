@@ -1,0 +1,2 @@
+ALTER TABLE routers
+  ADD COLUMN last_poll_at TIMESTAMPTZ;

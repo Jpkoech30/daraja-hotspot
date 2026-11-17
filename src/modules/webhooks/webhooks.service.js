@@ -1,4 +1,5 @@
 // src/modules/webhooks/webhooks.service.js
+const crypto = require('crypto');
 const { pool } = require('../../config/db');
 const webhooksRepo = require('./webhooks.repo');
 
@@ -27,14 +28,13 @@ exports.processMpesaCallback = async (callbackBody) => {
 
     // 4. Handle Successful Payment
     const mpesaReceipt = CallbackMetadata.Item.find(i => i.Name === 'MpesaReceiptNumber').Value;
-    const plan = await webhooksRepo.getPlanProfile(client, tx.plan_id);
-
     const payload = {
       username: `u_${mpesaReceipt}`,
-      password: mpesaReceipt.slice(-4),
-      profile: plan.mikrotik_profile,
+      password: crypto.randomBytes(16).toString('hex'),
+      profile: tx.plan_mikrotik_profile,
       macAddress: tx.mac_address,
-      durationMin: plan.duration_min
+      planId: tx.plan_id,
+      durationMin: tx.plan_duration_min
     };
 
     await webhooksRepo.markSuccessAndQueueJob(

@@ -4,6 +4,7 @@ const router = express.Router();
 
 // POST /api/portal/checkout
 router.post('/', checkoutController.checkout);
+router.get('/access/:checkoutId', checkoutController.getAccess);
 router.get('/status/:checkoutId', checkoutController.getStatus);
 
 module.exports = router;

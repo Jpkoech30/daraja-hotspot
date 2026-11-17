@@ -1,0 +1,5 @@
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS password_hash TEXT;
+
+ALTER TABLE transactions
+  ALTER COLUMN provider SET DEFAULT 'MPESA';
