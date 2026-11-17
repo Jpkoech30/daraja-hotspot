@@ -391,7 +391,7 @@ test('hotspot login page redirects unauthenticated clients to the tenant portal 
       crypto.createHash('sha256').update(token).digest('hex'),
       'router-1'
     ]);
-    assert.match(page, /https:\/\/isp\.example\.test\/\?tenantId=tenant-1&routerId=router-1/);
+    assert.match(page, /https:\/\/isp\.example\.test\/portal\/\?tenantId=tenant-1&routerId=router-1/);
     assert.match(page, /mac=\$\(mac-esc\)&loginUrl=\$\(link-login-only-esc\)/);
     assert.match(page, /dst=\$\(link-orig-esc\)/);
   } finally {

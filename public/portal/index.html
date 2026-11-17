@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wi-Fi access</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to Wi-Fi</h1>
+            <p>Choose a bundle and pay securely with M-Pesa</p>
+        </div>
+
+        <div id="plans-container" class="plans">
+            <p style="text-align:center; color:#6b7280;">Loading plans...</p>
+        </div>
+
+        <div id="checkout-section" class="checkout-section hidden">
+            <h3 id="selected-plan-name"></h3>
+            <p class="price" id="selected-plan-price"></p>
+            <p class="plan-duration" id="selected-plan-duration"></p>
+
+            <label class="phone-label" for="phone">Safaricom M-Pesa number</label>
+            <input type="tel" id="phone" autocomplete="tel" inputmode="tel" placeholder="07XX XXX XXX or +254 7XX XXX XXX" aria-describedby="phone-help" />
+            <p id="phone-help" class="field-help">Enter the number that should receive the M-Pesa prompt. Confirm the amount before approving it.</p>
+            <button id="pay-btn" onclick="initiatePayment()">Pay with M-Pesa</button>
+            <p id="status-message" class="status"></p>
+        </div>
+    </div>
+    <script src="/app.js"></script>
+</body>
+</html>

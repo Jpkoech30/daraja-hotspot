@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en-KE">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Beginner-friendly guides to internet uplinks, MikroTik routers, Wi-Fi hotspots, bundles, and payment support for Kenyan operators.">
+    <meta name="theme-color" content="#102b37">
+    <title>Field guides for Wi-Fi operators — Daraja</title>
+    <link rel="stylesheet" href="/marketing.css">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Daraja home">
+            <span class="brand-mark" aria-hidden="true">D</span>
+            <span>daraja<span class="brand-dot">.</span></span>
+        </a>
+        <nav class="header-actions" aria-label="Main navigation">
+            <a class="nav-link" href="/#platform">Platform</a>
+            <a class="nav-link" href="/#field-notes">Field notes</a>
+            <a class="button button-light" href="/admin/">ISP workspace <span aria-hidden="true">↗</span></a>
+        </nav>
+    </header>
+
+    <main class="guides-main">
+        <section class="guides-intro">
+            <span class="eyebrow">DARAJA FIELD NOTES</span>
+            <h1>Practical guides for running customer Wi-Fi.</h1>
+            <p>New to running a Wi-Fi hotspot? Start with the basics, learn how your internet connection reaches customers, and follow practical guides for setup, bundles, and payment support.</p>
+            <a class="button button-primary" href="/admin/">Open ISP workspace <span aria-hidden="true">→</span></a>
+        </section>
+
+        <nav class="guide-index" aria-label="Guide topics">
+            <a href="#wifi-basics">Start here</a>
+            <a href="#internet-uplinks">Internet uplinks</a>
+            <a href="#mikrotik-lan">MikroTik setup</a>
+            <a href="#clear-bundles">Bundle billing</a>
+            <a href="#payment-support">Payment support</a>
+        </nav>
+
+        <div class="guide-articles">
+            <article class="guide-article" id="wifi-basics">
+                <span class="field-note-category">START HERE · THE BIG PICTURE</span>
+                <h2>How a customer Wi-Fi hotspot works</h2>
+                <p class="guide-lead">Think of your setup as a path: internet comes in from a provider, your router manages the connection, Wi-Fi equipment shares it with customers, and a hotspot page controls who can use it.</p>
+                <div class="network-flow" aria-label="Internet provider connects to MikroTik router, then Wi-Fi access point, then customer device">
+                    <span>Internet provider</span><span aria-hidden="true">→</span>
+                    <span>MikroTik router</span><span aria-hidden="true">→</span>
+                    <span>Wi-Fi access point</span><span aria-hidden="true">→</span>
+                    <span>Customer phone</span>
+                </div>
+                <ol>
+                    <li><strong>Your provider brings internet to your site.</strong> This could be fiber, a mobile network such as Safaricom or Airtel, or Starlink. The connection from the provider is often called the <em>uplink</em> or <em>WAN</em>.</li>
+                    <li><strong>The MikroTik router manages traffic.</strong> It connects to the provider and to your customer network. It can control which connected devices are allowed through a hotspot login.</li>
+                    <li><strong>Wi-Fi equipment gives customers a wireless signal.</strong> An access point (AP) or wireless router broadcasts the Wi-Fi network name (SSID). It may be built into the MikroTik or be a separate device.</li>
+                    <li><strong>The customer joins Wi-Fi and buys access.</strong> The hotspot portal shows the available bundles. After a successful payment confirmation, the router needs to create or enable that customer's hotspot account.</li>
+                </ol>
+                <p><strong>Where Daraja fits:</strong> Daraja helps manage hotspot bundles, the customer portal, payment testing, and router provisioning. It does not provide internet, install Wi-Fi coverage, or automatically configure your provider connection.</p>
+                <h3>Words you will see in these guides</h3>
+                <dl class="guide-glossary">
+                    <div><dt>WAN / uplink</dt><dd>The internet connection coming from your provider into your site and router.</dd></div>
+                    <div><dt>LAN</dt><dd>The local network inside your site, usually where customer devices and access points connect.</dd></div>
+                    <div><dt>Ethernet handoff</dt><dd>The network port or cable through which one device gives an internet connection to another.</dd></div>
+                    <div><dt>Hotspot</dt><dd>A network that asks users to sign in or pay before allowing normal internet access.</dd></div>
+                    <div><dt>Provisioning</dt><dd>Setting up a customer's router account after payment has been confirmed.</dd></div>
+                    <div><dt>Polling</dt><dd>The router regularly checking Daraja for new work, such as a request to create a customer account.</dd></div>
+                </dl>
+            </article>
+
+            <article class="guide-article" id="internet-uplinks">
+                <span class="field-note-category">MIKROTIK · INTERNET CONNECTIONS</span>
+                <h2>Connect your internet provider to a MikroTik</h2>
+                <p class="guide-lead">Your MikroTik needs a working internet connection before it can serve customers or contact Daraja. The provider connection is the <strong>uplink</strong> (also called the <strong>WAN</strong>). The customer side of the router is the <strong>LAN</strong>. Keeping those roles clear helps prevent accidentally putting the hotspot on the provider-facing port.</p>
+                <h3>First, understand the equipment</h3>
+                <p>Your provider usually supplies or installs a device that receives the service. It might be a fiber ONT, a mobile modem, a Starlink router, or another gateway. An <strong>ONT</strong> (optical network terminal) converts a fiber connection into a network port. A <strong>modem</strong> connects to a mobile network. A <strong>gateway</strong> is a provider device that may combine a modem and router. The Ethernet cable from that equipment to your MikroTik is the provider's <strong>handoff</strong>.</p>
+                <p>A common layout is:</p>
+                <div class="network-flow" aria-label="Provider equipment Ethernet cable connects to MikroTik WAN, then customer LAN and Wi-Fi">
+                    <span>Provider device</span><span aria-hidden="true">→</span>
+                    <span>MikroTik WAN port</span><span aria-hidden="true">→</span>
+                    <span>MikroTik customer LAN</span><span aria-hidden="true">→</span>
+                    <span>Access point / customers</span>
+                </div>
+                <p>The arrows represent the path of the connection, not a required port name. MikroTik port names and provider equipment differ, so identify your ports from your own device labels and configuration.</p>
+                <h3>Common ways to connect</h3>
+                <ul>
+                    <li><strong>Fiber:</strong> The fiber cable usually goes to the provider's ONT first; Ethernet then connects the ONT to the MikroTik WAN port. Ask whether the service is already configured on the ONT and what the MikroTik must use to connect.</li>
+                    <li><strong>Safaricom or Airtel mobile broadband:</strong> A compatible LTE/5G modem or provider router can connect to the MikroTik with Ethernet. Some MikroTik models accept a SIM directly, but not every model supports every mobile network or band. Ask about coverage at your location, device compatibility, the correct APN (a mobile-network setting), and any data limits or fair-use terms in your plan.</li>
+                    <li><strong>Starlink:</strong> The Starlink equipment receives the satellite connection and provides a network handoff. Depending on your kit, you may need an Ethernet adapter, and the router/bypass options differ. Check the current instructions for your exact Starlink hardware and subscription.</li>
+                </ul>
+                <h3>Ask your provider these questions</h3>
+                <ul>
+                    <li>Which device and port should connect to my MikroTik?</li>
+                    <li>Does the service connect automatically, or do I need settings such as a username/password, VLAN ID, static IP, or mobile APN?</li>
+                    <li>Is the supplied device already acting as a router, and can it be set to bridge or bypass mode if needed?</li>
+                    <li>Are there data allowances, fair-use rules, or restrictions on sharing this connection with customers?</li>
+                </ul>
+                <h3>Connect and test one step at a time</h3>
+                <ol>
+                    <li>With the provider equipment and MikroTik identified, connect the provider's Ethernet handoff to the MikroTik port intended for WAN. Do not guess if the ports or existing setup are unclear.</li>
+                    <li>Configure the WAN connection using the provider's instructions. <strong>DHCP</strong> means the provider device gives the MikroTik network settings automatically; <strong>PPPoE</strong> usually needs a provider-supplied username and password; a <strong>static IP</strong> uses fixed settings supplied by the provider.</li>
+                    <li>Keep the customer LAN on a different interface or bridge (a group of router ports treated as one local network). Do not select the WAN as the customer hotspot network.</li>
+                    <li>Test from the MikroTik that it can reach the internet and look up website names. Then connect a test device to the customer Wi-Fi and check that the device also has a working path out.</li>
+                    <li>Only after these tests work should you continue with hotspot setup. Daraja's setup does not repair a provider connection that is offline or incorrectly configured.</li>
+                </ol>
+                <h3>If the router has internet but customers do not</h3>
+                <p>Check the cable and link lights, then check whether the MikroTik's WAN is connected and has received the settings expected from the provider. If websites do not open by name, DNS (the service that turns names like example.com into network addresses) may not be working. If the router can browse but customer devices cannot, check the customer LAN, Wi-Fi access point, and local address assignment. Make one change at a time, and keep a backup before changing a router that is already in use.</p>
+                <p>If both the provider device and MikroTik are routing, they may create <strong>double NAT</strong>: two devices translate private network addresses as traffic goes out. Ordinary browsing often still works, but incoming connections, some applications, and port forwarding can be more difficult. Ask your provider before changing their equipment.</p>
+                <p>A second uplink is not automatic backup just because another cable is connected; the router needs deliberate routing and failover configuration, and the backup connection must be tested.</p>
+                <p><strong>Daraja boundary:</strong> Daraja manages hotspot access and router-agent tasks. It does not provision the ISP connection, configure the WAN, activate a SIM, provide provider credentials, create Wi-Fi coverage, or guarantee failover. Provider equipment and plans change, so confirm current requirements with Safaricom, Airtel, Starlink, or your local ISP.</p>
+            </article>
+
+            <article class="guide-article" id="mikrotik-lan">
+                <span class="field-note-category">MIKROTIK · NETWORK PREPARATION</span>
+                <h2>Before you turn on a hotspot</h2>
+                <p class="guide-lead">A hotspot is the sign-in or payment step customers see before they can use the internet. Before adding it, make sure your provider connection and customer Wi-Fi already work, and know which router port serves each one.</p>
+                <h3>Prepare the router first</h3>
+                <ul>
+                    <li>Confirm the internet provider connection works on the MikroTik, then identify the customer-facing LAN (the local network customers will join). A bridge is a group of router ports that work together as one LAN.</li>
+                    <li>Save a backup of the router's current configuration. Keep a way to manage the router even if the hotspot or Wi-Fi stops working.</li>
+                    <li>Check for an existing hotspot or DHCP service. DHCP is the service that automatically gives phones and computers the local network settings they need; two services on the same network can conflict.</li>
+                    <li>Make sure the router can reach Daraja's public HTTPS address. HTTPS is the encrypted web connection used by the app.</li>
+                </ul>
+                <h3>Know what Daraja configures</h3>
+                <p>The current setup flow finds or asks you to choose the customer LAN, then adds Daraja's hotspot, DHCP, portal, and agent settings. The <strong>SSID</strong> is the name customers choose from their phone's Wi-Fi list. Daraja does <strong>not</strong> configure the WAN/uplink, create Wi-Fi or an SSID, build a bridge, or apply a complete firewall policy. Review generated changes on a test router first, especially if it already serves customers.</p>
+                <p>Daraja's installer is designed for MikroTik RouterOS (the operating system on MikroTik devices). Use a supported, maintained RouterOS release and test on your own hardware before using it for a live customer network.</p>
+            </article>
+
+            <article class="guide-article" id="clear-bundles">
+                <span class="field-note-category">BILLING · CUSTOMER CLARITY</span>
+                <h2>Make every Wi-Fi bundle easy to understand</h2>
+                <p class="guide-lead">A Wi-Fi bundle is the offer a customer buys. They should be able to see its price, how long it lasts, and what help to ask for if payment succeeds but internet access does not.</p>
+                <h3>Put the essentials up front</h3>
+                <ul>
+                    <li>Use a recognizable bundle name and show the total price in KES.</li>
+                    <li>State the access duration clearly (for example, 1 hour or 1 day).</li>
+                    <li>Explain any speed, fair-use, or data limits separately and only if you have actually configured and can support them.</li>
+                    <li>Tell customers which M-Pesa number should receive the prompt and to confirm the amount before approving.</li>
+                </ul>
+                <h3>Match the promise to the product</h3>
+                <p>Daraja bundles currently define price and access time. They do not enforce a data cap or speed guarantee. When a bundle expires, Daraja's backend (the app's server) and router work together to end access. The router must be online and regularly check in—this check is called <strong>polling</strong>—to receive new instructions. Avoid advertising unlimited data, a particular speed, or an exact instant connection unless your own service terms and network configuration support that promise.</p>
+                <p>For more context on transparent data billing, see the <a href="https://www.ca.go.ke/ca-records-strong-performance-resolving-consumer-complaints" target="_blank" rel="noopener noreferrer">Communications Authority of Kenya’s consumer complaint update</a>. It describes broad sector complaints, not hotspot-specific research.</p>
+            </article>
+
+            <article class="guide-article" id="payment-support">
+                <span class="field-note-category">PAYMENTS · FIRST-LINE SUPPORT</span>
+                <h2>When a customer says “I paid”</h2>
+                <p class="guide-lead">A payment can succeed before the router has finished giving the customer internet access. Check both steps before asking someone to pay again.</p>
+                <ol>
+                    <li><strong>Confirm the payment.</strong> Ask the customer to check their Safaricom M-Pesa message and the amount. Never ask them to share their M-Pesa PIN or full payment credentials.</li>
+                    <li><strong>Check the payment in the workspace.</strong> A pending payment means the app has not yet recorded a final result. The payment confirmation (also called a callback) can sometimes take time to arrive.</li>
+                    <li><strong>Check the router connection.</strong> Make sure the router is online and has checked in with Daraja recently. It must check in to receive the instruction to create access.</li>
+                    <li><strong>Check account setup.</strong> Look for a job marked waiting, completed, or failed. A job is the instruction sent to the router; provisioning means the router has created the customer's hotspot account. If it failed, resolve the router problem before retrying.</li>
+                    <li><strong>Help the customer reconnect.</strong> After setup completes, reconnect to the Wi-Fi and follow the sign-in prompt if automatic sign-in did not finish.</li>
+                </ol>
+                <p>Keep a support record with the transaction reference, time, router, and what solved the problem. The current product does not process refunds, reconcile M-Pesa accounts, or show an ISP support-contact field, so define those operator processes separately.</p>
+                <p><strong>Testing note:</strong> this build uses Safaricom Daraja sandbox credentials. Do not use it to collect live customer payments.</p>
+            </article>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <a class="brand brand-footer" href="/"><span class="brand-mark" aria-hidden="true">D</span><span>daraja<span class="brand-dot">.</span></span></a>
+        <span>Tools for the people building local connectivity.</span>
+        <div class="footer-links"><a href="/">Home</a><a href="/#platform">Platform</a><a href="/admin/">ISP workspace</a></div>
+    </footer>
+</body>
+</html>

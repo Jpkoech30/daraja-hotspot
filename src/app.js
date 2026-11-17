@@ -18,9 +18,18 @@ app.use(cors());
 app.use(express.json());
 app.use(express.text({ type: 'text/plain' }));
 app.use(express.urlencoded({ extended: true }));
-app.get('/business', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/business.html'));
+app.get('/', (req, res) => {
+  const isCaptivePortal = req.query.tenantId || req.query.routerId;
+  const page = isCaptivePortal ? 'portal/index.html' : 'business.html';
+  res.sendFile(path.join(__dirname, '../public', page));
 });
+app.get('/business', (req, res) => {
+  res.redirect(301, '/');
+});
+app.get('/guides', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/guides.html'));
+});
+app.use('/portal', express.static(path.join(__dirname, '../public/portal')));
 app.use('/admin', express.static(path.join(__dirname, '../frontend/admin/dist')));
 app.use(express.static(path.join(__dirname, '../public')));
 

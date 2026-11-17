@@ -146,7 +146,7 @@ exports.generateHotspotLoginPage = async (rawToken, routerId) => {
   if (!router) throw new Error('Router not found');
 
   const { backendUrl } = getBackendUrl();
-  const portalUrl = escapeHtmlAttribute(`${backendUrl}/`);
+  const portalUrl = escapeHtmlAttribute(`${backendUrl}/portal/`);
   const tenantId = escapeHtmlAttribute(router.tenant_id);
   const safeRouterId = escapeHtmlAttribute(router.id);
   return `<!doctype html>

@@ -33,7 +33,7 @@ Connect customer payments to MikroTik hotspot provisioning with a Node.js and Po
 
 The router initiates outbound requests to the backend, so the design does not require the backend to connect directly to a router behind carrier-grade NAT.
 
-The [ISP product landing page](./public/business.html), served at `/business`, explains the customer and operator journeys. Daraja currently supports time-based bundles, MikroTik hotspot provisioning, workspace payment/router reporting, and Safaricom Daraja **sandbox** checkout. It is not ready to process live customer payments; the ISP supplies and operates its own internet connection, Wi-Fi coverage, router policies, and customer support. Speed limits, data caps, and other router vendors are not supported by this build.
+The ISP product landing page at `/` explains the product and links to the workspace. The captive customer Wi-Fi portal is served separately at `/portal/`; existing captive-portal URLs that include `tenantId` or `routerId` at `/` continue to open the payment portal. `/business` redirects to `/`. Daraja currently supports time-based bundles, MikroTik hotspot provisioning, workspace payment/router reporting, and Safaricom Daraja **sandbox** checkout. It is not ready to process live customer payments; the ISP supplies and operates its own internet connection, Wi-Fi coverage, router policies, and customer support. Speed limits, data caps, and other router vendors are not supported by this build.
 
 ## How it works
 
@@ -156,8 +156,9 @@ The app listens on `http://localhost:3000` by default.
 
 | Page | URL |
 | --- | --- |
-| ISP product landing page | <http://localhost:3000/business> |
-| Customer Wi-Fi portal | <http://localhost:3000/> |
+| ISP product landing page | <http://localhost:3000/> |
+| MikroTik, billing, and support guides | <http://localhost:3000/guides> |
+| Customer Wi-Fi portal | <http://localhost:3000/portal/> |
 | Admin dashboard | <http://localhost:3000/admin/> |
 | Health check | <http://localhost:3000/health> |
 
@@ -247,7 +248,7 @@ ISP registration requires a working Resend configuration. Set `RESEND_API_KEY` t
 
 Protected admin routes require the JWT returned by the login endpoint.
 
-The customer portal reads `tenantId`, `routerId`, and `mac` from its URL query string. For example: `http://localhost:3000/?tenantId=<tenant-uuid>&routerId=<router-uuid>&mac=AA:BB:CC:DD:EE:FF`.
+The product landing page is served at `/`; its product, workflow, and FAQ links explain the current ISP offering and route operators to `/admin/`. The customer portal reads `tenantId`, `routerId`, and `mac` from its URL query string. For example: `http://localhost:3000/portal/?tenantId=<tenant-uuid>&routerId=<router-uuid>&mac=AA:BB:CC:DD:EE:FF`. Legacy root URLs carrying `tenantId` or `routerId` are also served by the portal for compatibility. New router setup scripts send captive users to `/portal/`.
 
 The expiry worker starts with the server and runs once per minute. Expired users are removed from `hotspot_users` as their `DISABLE_USER` provisioning jobs are queued, so routers can disconnect those accounts on their next poll.
 
@@ -266,7 +267,8 @@ The PostgreSQL integration test is opt-in because it creates and drops uniquely 
 ```text
 daraja-hotspot/
 ├── frontend/admin/         # React admin dashboard (Vite)
-├── public/                 # Customer portal and built admin assets
+├── public/                 # Product landing page and customer portal
+│   └── portal/             # Captive customer payment portal
 ├── src/
 │   ├── db/
 │   │   ├── migrations/     # Versioned database changes
